@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const commands = ['new', 'get', 'complete', 'help']
+
 const chalk = require('chalk')
 const args = process.argv
 
@@ -33,8 +33,81 @@ if (args.length > 3) {
   errorLog(`only one argument can be accepted`)
   usage()
 }
-...
+const commands = ['new', 'get', 'complete', 'help']
 if (commands.indexOf(args[2]) == -1) {
   errorLog('invalid command passed')
   usage()
+}
+
+switch(args[2]) {
+  case 'help':
+    usage()
+    break
+  case 'new':
+    break
+  case 'get':
+    break
+  case 'complete':
+    break
+  default:
+    errorLog('invalid command passed')
+    usage()
+}
+
+const rl = require('readline');
+
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+
+const adapter = new FileSync('db.json')
+const db = low(adapter)
+
+// Set some defaults (required if your JSON file is empty)
+db.defaults({ todos: []}).write()
+
+function prompt(question) {
+  const r = rl.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+  });
+  return new Promise((resolve, error) => {
+    r.question(question, answer => {
+      r.close()
+      resolve(answer)
+    });
+  })
+}
+
+function newTodo() {
+  const q = chalk.blue('Type in your todo\n')
+  prompt(q).then(todo => {
+    console.log(todo)
+  })
+}
+switch(args[2]) {
+  
+  case 'new':
+    newTodo()
+    break
+    
+}
+
+function getTodos() {
+  const todos = db.get('todos').value()
+  let index = 1;
+  todos.forEach(todo => {
+    const todoText = `${index++}. ${todo.title}`
+    console.log(todoText)
+  })
+}
+
+
+// switch statements
+switch(args[2]) {
+    
+    case 'get':
+        getTodos()
+        break
+    
 }
