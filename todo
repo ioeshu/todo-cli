@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-console.log(process.argv)
+
 const chalk = require('chalk')
 const args = process.argv
 
@@ -13,9 +13,9 @@ const usage = function() {
 
     commands can be:
 
-    new:      used to create a new todo
-    get:      used to retrieve your todos
-    complete: used to mark a todo as complete
+    add:      used to create a add todo
+    ls:      used to retrieve your todos
+    done: used to mark a todo as done
     help:     used to print the usage guide
   `
 
@@ -29,11 +29,12 @@ function errorLog(error) {
 }
 
 // we make sure the length of the arguments is exactly three
-if (args.length > 3) {
-  errorLog(`only one argument can be accepted`)
+if (args.length > 3 && args[2] != 'done') {
+  errorLog('only one argument can be accepted')
   usage()
+  return
 }
-const commands = ['new', 'get', 'complete', 'help']
+const commands = ['add', 'ls', 'done', 'help']
 if (commands.indexOf(args[2]) == -1) {
   errorLog('invalid command passed')
   usage()
@@ -43,11 +44,11 @@ switch(args[2]) {
   case 'help':
     usage()
     break
-  case 'new':
+  case 'add':
     break
-  case 'get':
+  case 'ls':
     break
-  case 'complete':
+  case 'done':
     break
   default:
     errorLog('invalid command passed')
@@ -79,34 +80,72 @@ function prompt(question) {
   })
 }
 
-function newTodo() {
-  const q = chalk.blue('Type in your todo\n')
-  prompt(q).then(todo => {
-    console.log(todo)
-  })
-}
 switch(args[2]) {
-  
-  case 'new':
+  //...
+  case 'add':
     newTodo()
     break
-    
+    // ...
+}
+function newTodo() {
+  const q = chalk.blue("Make your To-Do List:")
+  prompt(q).then(todo => {
+    db.get('todos')
+      .push({
+      title: todo,
+      done: false
+      })
+      .write()
+  })
 }
 
 function getTodos() {
   const todos = db.get('todos').value()
   let index = 1;
   todos.forEach(todo => {
-    const todoText = `${index++}. ${todo.title}`
-    console.log(todoText)
+    let todoText = `${index++}. ${todo.title}`
+    if (todo.done) {
+      todoText += ' ✔' // add a check mark
+    }
+    console.log(chalk.strikethrough(todoText))
   })
+  return
 }
+//...
 
 // switch statements
 switch(args[2]) {
-    
-    case 'get':
+    //...
+    case 'ls':
         getTodos()
         break
-    
+    case 'done':
+        completeTodo()
+        break
+    //...
+}
+
+function completeTodo() {
+  // check that length
+  if (args.length != 4) {
+    errorLog("invalid number of arguments passed for done command")
+    return
+  }
+
+  let n = Number(args[3])
+  // check if the value is a number
+  if (isNaN(n)) {
+    errorLog("please provide a valid number for done command")
+    return
+  }
+
+  // check if correct length of values has been passed
+  let todosLength = db.get('todos').value().length
+  if (n > todosLength) {
+    errorLog("invalid number passed for done command.")
+    return
+  }
+
+  // update the todo item marked as done
+  db.set(`todos[${n-1}].done`, true).write()
 }
